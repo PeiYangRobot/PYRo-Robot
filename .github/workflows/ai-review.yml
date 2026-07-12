@@ -1,0 +1,174 @@
+name: AI Code Review (DeepSeek)
+
+on:
+  pull_request_target:          # 关键：改为 pull_request_target
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    # 不再需要 fork 条件，因为 target 事件始终在目标仓库运行
+    steps:
+      # ========================
+      # 团队豁免检查 + 自动 approve 与 merge
+      # ========================
+      - name: Team-based auto approve and merge
+        id: team_check
+        uses: actions/github-script@v8
+        env:
+          TEAM_RULES: ${{ vars.TEAM_RULES }}   # 从仓库 Variables 读取团队规则
+        with:
+          script: |
+            const rules = JSON.parse(process.env.TEAM_RULES);
+            const prAuthor = context.payload.pull_request.user.login;
+            const prNumber = context.issue.number;
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 100
+            });
+            const changedPaths = files.map(f => f.filename);
+            console.log('PR author:', prAuthor);
+            console.log('Changed files:', changedPaths);
+
+            // 1. 查找作者所属兵种
+            let authorTeam = null;
+            for (const [team, config] of Object.entries(rules)) {
+              if (config.members.includes(prAuthor)) {
+                authorTeam = team;
+                break;
+              }
+            }
+
+            // 不属于任何豁免兵种 → 正常审查
+            if (!authorTeam) {
+              console.log('Author not in any team with skip privilege.');
+              core.setOutput('auto_merge', 'false');
+              return;
+            }
+
+            // 2. 检查所有变更是否都在该兵种目录下
+            const teamPath = rules[authorTeam].path;
+            const allInTeamDir = changedPaths.every(p => p.startsWith(teamPath));
+            if (!allInTeamDir) {
+              console.log('Changes outside team directory, regular review required.');
+              core.setOutput('auto_merge', 'false');
+              return;
+            }
+
+            // 3. 满足条件：自动 approve
+            console.log(`All changes in ${authorTeam} directory. Approving...`);
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              event: 'APPROVE',
+              body: `🤖 自动通过：${prAuthor} 属于 **${authorTeam}** 兵种，且所有改动仅涉及本兵种目录，无需人工审查。`
+            });
+
+            // 4. 尝试自动 merge
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                merge_method: 'merge'   // 可改为 'squash' 或 'rebase'
+              });
+              console.log('PR merged successfully.');
+              core.setOutput('auto_merge', 'true');
+            } catch (mergeError) {
+              // 冲突：关闭 PR 并留言
+              if (mergeError.status === 409) {
+                console.log('Merge conflict. Closing PR...');
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: '❌ 存在冲突，请解决并重新提交。'
+                });
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber,
+                  state: 'closed'
+                });
+                core.setOutput('auto_merge', 'false');
+              } else {
+                // 其他错误（如分支保护）仅留言不关闭
+                console.log('Auto merge failed:', mergeError.message);
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: `⚠️ 自动合并失败：${mergeError.message} 请手动合并或检查分支保护规则。`
+                });
+                core.setOutput('auto_merge', 'false');
+              }
+            }
+
+      # ========================
+      # 以下为常规 AI 审查（仅在未自动 merge 时执行）
+      # ========================
+      # 第一步：只检出目标分支（main）的代码，而不是 PR 的合并代码
+      - name: Checkout trusted scripts
+        if: steps.team_check.outputs.auto_merge != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}   # 强制使用目标分支（如 main）
+          path: trusted                 # 放到 trusted 目录下，避免与后续操作混淆
+
+      - name: Get PR diff
+        if: steps.team_check.outputs.auto_merge != 'true'
+        id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          # 获取 PR 的 diff（只读操作，安全）
+          gh pr diff $PR_NUMBER --repo ${{ github.repository }} > pr.diff
+          echo "diff_length=$(wc -c < pr.diff)" >> $GITHUB_OUTPUT
+
+      - name: Install Python dependencies
+        if: steps.team_check.outputs.auto_merge != 'true' && steps.diff.outputs.skip_review != 'true'
+        run: pip install -r trusted/.github/scripts/requirements.txt
+
+      - name: Analyze diff with DeepSeek
+        if: steps.team_check.outputs.auto_merge != 'true' && steps.diff.outputs.skip_review != 'true'
+        id: analyze
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          # 使用我们信任的脚本（来自目标分支）
+          python trusted/.github/scripts/ai_review.py pr.diff > review_output.md
+          # 保底输出，防止模型返回空导致无评论
+          if [ ! -s review_output.md ]; then
+            echo "AI 审查完成：未发现明显问题。" > review_output.md
+          fi
+          {
+            echo 'review_body<<EOF'
+            cat review_output.md
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Post review comment
+        if: steps.team_check.outputs.auto_merge != 'true' && steps.diff.outputs.skip_review != 'true' && success()
+        uses: actions/github-script@v8
+        env:
+          REVIEW_BODY: ${{ steps.analyze.outputs.review_body }}   # 用环境变量传递
+        with:
+          script: |
+            const reviewBody = process.env.REVIEW_BODY;
+            if (reviewBody && reviewBody.trim()) {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                body: reviewBody,
+                event: 'COMMENT'
+              });
+            }
