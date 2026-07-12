@@ -1,0 +1,8 @@
+{
+  "cfg_path": null,
+  "flash_mode": "Run",
+  "cmake_options": "-DROBOT_ID=1",
+  "backend_type": "PyOCD",
+  "target_type": "stm32h723xx",
+  "breakpoints": []
+}
