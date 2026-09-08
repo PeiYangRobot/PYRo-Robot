@@ -41,8 +41,8 @@ void booster_deps_init() {
     booster_deps_ptr->pid.fric_pid[1] = new pid_t(0.3f, 0.0f, 0.0f, 1.0f, 20, 60.0f, 1, 15.0f, 1, 4);
 
     // 拨弹盘pid初始化
-    booster_deps_ptr->pid.trigger_pos_pid = new pid_t(30.0f, 0.01f, 0.0f, 1.0f, 15.0f, 60.0f, 1, 30.0f, 1, 4);
-    booster_deps_ptr->pid.trigger_spd_pid = new pid_t(4.0f, 0.01f, 0.0f, 1.0f, 15.0f, 60.0f, 1, 30, 1, 4);
+    booster_deps_ptr->pid.trigger_pos_pid = new pid_t(60.0f, 0.5f, 0.0f, 3.0f, 20.0f);
+    booster_deps_ptr->pid.trigger_spd_pid = new pid_t(10.0f, 0.02f, 0.0f, 5.0f, 10.0f);;
 }
 
 void booster_vt032cmd(uint32_t notify_val) {
@@ -85,7 +85,8 @@ void booster_dr162cmd(uint32_t notify_val) {
         booster_cmd_ptr->is_fric_on = false;
         booster_cmd_ptr->fire_licence = false;
     }
-    if(vrc.switches.right.current_pos == pyro::sw_pos_t::MID) {
+    if(vrc.switches.right.current_pos == pyro::sw_pos_t::MID
+            || vrc.switches.right.current_pos == pyro::sw_pos_t::DOWN) {
         booster_cmd_ptr->mode = infantry2_booster_cmd_t::mode_t::ACTIVE;
         booster_cmd_ptr->fire_licence = true; //没接热量管理，所以临时直接授予发射许可
 
@@ -98,30 +99,17 @@ void booster_dr162cmd(uint32_t notify_val) {
         if(notify_val & EVENT_BIT_FIRE) {
             booster_cmd_ptr->is_fric_on = true;
             booster_ptr->notify_single_shoot();
-        }
-        
-        if(notify_val & EVENT_BIT_FIRE_END) {
             booster_cmd_ptr->continue_shoot = false;
         }
-    }
-    if(vrc.switches.right.current_pos == pyro::sw_pos_t::DOWN) {
-        booster_cmd_ptr->mode = infantry2_booster_cmd_t::mode_t::ACTIVE;
-        booster_cmd_ptr->fire_licence = true; //没接热量管理，所以临时直接授予发射许可
 
-        if(notify_val & EVENT_BIT_FRIC_ON)
-            booster_cmd_ptr->is_fric_on = true;
-        
-        if(notify_val & EVENT_BIT_FRIC_OFF)
-            booster_cmd_ptr->is_fric_on = false;
+        if (notify_val & EVENT_BIT_FIRE_END) {
+            booster_cmd_ptr->continue_shoot = false;
+        }
 
-        if(notify_val & EVENT_BIT_FIRE) {
-            booster_cmd_ptr->is_fric_on = true;
+        if (fabs(vrc.axes.wheel) > 0.5f)
             booster_cmd_ptr->continue_shoot = true;
-        }
-        
-        if(notify_val & EVENT_BIT_FIRE_END) {
+        else
             booster_cmd_ptr->continue_shoot = false;
-        }
     }
 }
 

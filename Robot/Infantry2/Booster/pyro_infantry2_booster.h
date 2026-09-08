@@ -77,7 +77,7 @@ class infantry2_booster_t final
     friend class module_base_t<infantry2_booster_t, infantry2_booster_module_params_t>;
 
   public:
-    static constexpr uint32_t EVENT_BIT_SINGLE_SHOOT = (1u << 0);  // 单发事件位
+    static constexpr uint32_t EVENT_BIT_SINGLE_SHOOT = (1 << 0);  // 单发事件位
     void notify_single_shoot();  // 投递单发事件（遥控/自瞄调用）
 
     infantry2_booster_t(const infantry2_booster_t&) = delete;

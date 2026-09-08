@@ -4,7 +4,7 @@ namespace pyro {
 
 void infantry2_booster_t::fsm_active_t::state_single_t::enter(owner *owner) {
     owner->_ctx.data.trigger_mode = infantry2_booster_data_t::trigger_pid_mode_t::POS;
-    owner->_ctx.data.target_trigger_rad += infantry2_booster::SINGLE_BULLET_RAD + 0.25f;
+    owner->_ctx.data.target_trigger_rad += infantry2_booster::SINGLE_BULLET_RAD+0.3f;
 }
 
 void infantry2_booster_t::fsm_active_t::state_single_t::execute(owner *owner) {
@@ -40,7 +40,7 @@ void infantry2_booster_t::fsm_active_t::state_single_t::execute(owner *owner) {
     if(std::fabs(owner->_ctx.data.current_trigger_rad - owner->_ctx.data.target_trigger_rad)
             < infantry2_booster::TRIGGER_RAD_TOLERANCE
         || std::max(std::fabs(owner->_ctx.data.out_fric_torque[0]), std::fabs(owner->_ctx.data.out_fric_torque[1]))
-            >= infantry2_booster::FRIC_SHOOT_TORQUE_THRESHOLD) {
+             >= infantry2_booster::FRIC_SHOOT_TORQUE_THRESHOLD) {
         if(_is_fric_ready(&owner->_ctx))
             request_switch(&owner->_active_state._ready_state);
         else

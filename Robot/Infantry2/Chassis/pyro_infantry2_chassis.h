@@ -93,6 +93,7 @@ class infantry2_chassis_t final
     // 业务逻辑方法
     static void _chassis_control(infantry2_chassis_ctx_t *ctx);
     static void _send_motor_command(infantry2_chassis_ctx_t *ctx);
+    static void _limit_steer_rate(infantry2_chassis_ctx_t *ctx);
 
     // 状态机定义（内嵌类）
     using owner = infantry2_chassis_t;

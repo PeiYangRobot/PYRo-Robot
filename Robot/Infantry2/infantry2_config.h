@@ -37,7 +37,7 @@ namespace infantry2_booster {
     constexpr float TRIGGER_RAD_TOLERANCE{0.01f}, TRIGGER_RAD_DEADZONE{0.05f};
     
     constexpr float CALI_REVERSE_RADPS{3.0f};
-    constexpr float CALI_FORWARD_RAD{0.0f};
+    constexpr float CALI_FORWARD_RAD{0.705045104f-0.0277180634f};
     // constexpr float CALI_FORWARD_RAD{0.522733748f+0.33131066f};
     
     constexpr uint32_t BLOCK_TIME_THRESHOLD{500};
@@ -53,9 +53,10 @@ namespace infantry2_booster {
 #elif BOARD == CHASSIS_BOARD
 
 namespace infantry2_chassis {
-
     constexpr float YAW_MOTOR_OFFSET{-1.75027227f};
     constexpr float RUDDER_MOTOR_OFFSET[4]{1.6007087f, 0.3014272f, 0.260048148f, 3.01427245f};
+
+    constexpr float RUDDER_MAX_RAD_DELTA{6.0f};
 
     constexpr float YAW_DEADZONE{0.01f};
     

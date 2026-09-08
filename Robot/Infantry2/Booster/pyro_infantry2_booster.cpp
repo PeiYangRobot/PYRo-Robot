@@ -20,6 +20,7 @@ void infantry2_booster_t::notify_single_shoot() {
 }
 
 void infantry2_booster_t::_update_feedback() {
+    // 电机反馈更新
     _ctx.deps.motor.fric[0]->update_feedback();
     _ctx.deps.motor.fric[1]->update_feedback();
     _ctx.deps.motor.trigger->update_feedback();

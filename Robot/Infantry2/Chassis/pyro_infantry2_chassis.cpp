@@ -70,6 +70,23 @@ void infantry2_chassis_t::_chassis_control(infantry2_chassis_ctx_t *ctx) {
     }
 }
 
+void infantry2_chassis_t::_limit_steer_rate(infantry2_chassis_ctx_t *ctx) {
+    for (int i = 0; i < 4; i++) {
+        const float cur = ctx->data.current_states.modules[i].angle;
+        const float tgt = ctx->data.target_states.modules[i].angle;
+        // 把角度差规约到 (-PI, PI]，避免 ±π 边界 2π 跳变
+        float diff = tgt - cur;
+        while (diff >  PI) diff -= 2.0f * PI;
+        while (diff < -PI) diff += 2.0f * PI;
+        // 每拍(1ms)最大转向增量 = 限速 * 控制周期
+        if (diff > infantry2_chassis::RUDDER_MAX_RAD_DELTA)
+            diff = infantry2_chassis::RUDDER_MAX_RAD_DELTA;
+        else if (diff < -infantry2_chassis::RUDDER_MAX_RAD_DELTA)
+            diff = -infantry2_chassis::RUDDER_MAX_RAD_DELTA;
+        ctx->data.target_states.modules[i].angle = cur + diff;
+    }
+}
+
 void infantry2_chassis_t::_send_motor_command(infantry2_chassis_ctx_t *ctx) {
     for(int i = 0; i < 4; i++)
         ctx->deps.motor.rudder[i]->send_torque(ctx->data.out_rudder_torque[i]);

@@ -23,7 +23,7 @@ void infantry2_booster_t::fsm_active_t::state_cali_reverse_t::execute(owner *own
     _send_trigger_command(&owner->_ctx);
 
     if(std::fabs(owner->_ctx.data.current_trigger_radps - owner->_ctx.data.target_trigger_radps)
-            >= owner->_ctx.data.target_trigger_radps * infantry2_booster::BLOCK_SPD_ERROR_RATE_THRESHOLD) {
+            >= std::fabs(owner->_ctx.data.target_trigger_radps * infantry2_booster::BLOCK_SPD_ERROR_RATE_THRESHOLD)) {
         if(owner->_ctx.data.block_start_tick == 0)
             owner->_ctx.data.block_start_tick = xTaskGetTickCount();
         else if(xTaskGetTickCount() - owner->_ctx.data.block_start_tick

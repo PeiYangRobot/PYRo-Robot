@@ -14,11 +14,13 @@ void infantry2_booster_t::fsm_active_t::state_ready_t::execute(owner *owner) {
     else {
         if(owner->_ctx.cmd->fire_licence &&
                 (owner->_ctx.data.notify_ev & infantry2_booster_t::EVENT_BIT_SINGLE_SHOOT)) {
-            owner->_ctx.data.notify_ev &= ~infantry2_booster_t::EVENT_BIT_SINGLE_SHOOT; // 消费
-            if(owner->_ctx.data.is_calibrated)
+            if(owner->_ctx.data.is_calibrated) {
                 request_switch(&owner->_active_state._single_state);
-            else
+                owner->_ctx.data.notify_ev &= ~infantry2_booster_t::EVENT_BIT_SINGLE_SHOOT; // 消费
+            }
+            else {
                 request_switch(&owner->_active_state._cali_reverse_state);
+            }
         }
     
         if(owner->_ctx.cmd->fire_licence && owner->_ctx.cmd->continue_shoot)

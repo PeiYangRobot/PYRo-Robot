@@ -1,8 +1,8 @@
 # =========================================================================
 # 1. 显式定义当前编译的板子类型（在这里切换 GIMBAL_BOARD 或 CHASSIS_BOARD）
 # =========================================================================
-#set(BOARD "GIMBAL_BOARD")
-set(BOARD "CHASSIS_BOARD")
+set(BOARD "GIMBAL_BOARD")
+#set(BOARD "CHASSIS_BOARD")
 
 add_library(Infantry2 OBJECT)
 
