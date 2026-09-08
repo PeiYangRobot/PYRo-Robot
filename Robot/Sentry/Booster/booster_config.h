@@ -1,0 +1,13 @@
+#include "pyro_core_def.h"
+#ifndef __BOOSTER_CONFIG_H__
+#define __BOOSTER_CONFIG_H__ 
+
+
+#define BOOSTER_SHOOT_FRIC_LINE_V    23.0f
+#define BOOSTER_FRIC_R              0.034f
+#define BOOSTER_SHOOT_FRIC_RADPS    BOOSTER_SHOOT_FRIC_LINE_V/BOOSTER_FRIC_R
+#define BOOSTER_SHOOT_TRIG_SPEED 10.0f
+#define BOOSTER_TRIGGER_RATE 36
+#define BOOSTER_ONE_SHOOT_ANGLE PI/4
+
+#endif

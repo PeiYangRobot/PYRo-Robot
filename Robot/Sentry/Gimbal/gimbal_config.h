@@ -1,0 +1,16 @@
+#ifndef GIMBAL_CONFIG_H
+#define GIMBAL_CONFIG_H
+
+
+
+#define GIMBAL_PITCH_OFFSET_RAD 0.0f;
+
+#define GIMBAL_PITCH_ZEROANGLE_RAD 0.225f;
+
+#define GIMBAL_YAW_OFFSET_RAD 3.07179666f;
+
+#define PITCH_OFFSET_RAD 0.0f;
+#define ROLL_OFFSET_RAD 0.0f;
+
+
+#endif
