@@ -34,7 +34,3 @@ build/
 .vscode
 !*/CMakeLists.txt
 !CMakeLists.txt
-
-
-
-
