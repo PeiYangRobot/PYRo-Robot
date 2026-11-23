@@ -2,7 +2,8 @@
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
-CORTEX_M7.IPParameters=default_mode_Activation,MPU_Control
+CORTEX_M7.CPU_ICache=Enabled
+CORTEX_M7.IPParameters=default_mode_Activation,MPU_Control,CPU_ICache
 CORTEX_M7.MPU_Control=__NULL
 CORTEX_M7.default_mode_Activation=1
 Dma.Request0=USART1_RX
