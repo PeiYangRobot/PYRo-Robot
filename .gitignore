@@ -28,6 +28,8 @@ JLinkSetting.ini
 *.gitmodules
 
 build/
+test/
+tests/
 /cmake-build-debug-stm32
 .cache/
 .idea
