@@ -79,7 +79,7 @@ elseif (ROBOT_ID EQUAL SUB_HERO_ID)
     target_link_libraries(${CMAKE_PROJECT_NAME}
             Sub_Hero)
 elseif (ROBOT_ID EQUAL INFANTRY1_ID)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/robot/infantry1)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Robot/infantry1)
     target_link_libraries(${CMAKE_PROJECT_NAME}
             Infantry1)
 elseif (ROBOT_ID EQUAL INFANTRY2_ID)
