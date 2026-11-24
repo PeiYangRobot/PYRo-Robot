@@ -46,11 +46,16 @@ add_compile_definitions(
 )
 
 set(CMSISDSP_BUILD_EXAMPLES OFF CACHE BOOL "Disable examples" FORCE)
+# 沿用 IMU_Module 的聚合构建，减少独立编译的文件，并关闭未使用的 float16 内核。
+set(FASTBUILD ON CACHE BOOL "Build CMSIS-DSP using aggregate sources" FORCE)
+set(DISABLEFLOAT16 ON CACHE BOOL "Disable CMSIS-DSP float16 kernels" FORCE)
 add_subdirectory(${DSP_REPO} build_cmsis_dsp)
 
 target_include_directories(CMSISDSP PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/Drivers/CMSIS/Include"
 )
+# DSP 内核在 Debug 和 Release 中都沿用 IMU_Module 的优化选项。
+target_compile_options(CMSISDSP PRIVATE -O2 -ffast-math)
 
 add_library(dsppp_lib INTERFACE)
 target_include_directories(dsppp_lib INTERFACE
@@ -62,6 +67,7 @@ target_include_directories(dsppp_lib INTERFACE
 add_executable(${CMAKE_PROJECT_NAME})
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/cmake/stm32cubemx)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/SEGGER_RTT)
 add_subdirectory(PYRo)
 
 if (ROBOT_ID EQUAL HERO_ID)
